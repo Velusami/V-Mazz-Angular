@@ -1,0 +1,143 @@
+<div class="app-shell">
+  <header class="top-header">
+    <div class="header-inner">
+      <a class="brand" href="#" (click)="$event.preventDefault(); activeTab.set('home')">
+        <img src="assets/v-mazz-logo.png" alt="V-Mazz logo">
+      </a>
+      <form class="search-form" (submit)="search($event)">
+        <span class="search-icon">⌕</span>
+        <input name="search" [ngModel]="query()" (ngModelChange)="query.set($event)" placeholder="Search for products, brands and MPNs">
+        <button type="submit">Search</button>
+      </form>
+      <div class="header-actions">
+        <button class="header-link" (click)="loginOpen.set(true)">♙ <span>Login</span></button>
+        <button class="header-link" (click)="activeTab.set('orders')">▤ <span>Orders</span></button>
+        <button class="header-link cart-link" (click)="showToast('Your cart is available after sign in')">🛒 <span>Cart</span><b>{{cartCount()}}</b></button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="category-nav">
+    <button *ngFor="let category of categoryNames()" [class.active]="selectedCategory() === category" (click)="selectCategory(category)">{{category}}</button>
+    <button class="ai-nav" (click)="openChat()">✦ Ask V-Mazz AI</button>
+  </nav>
+
+  <main class="page-content" *ngIf="activeTab() === 'home'; else ordersView">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">SMARTER B2B SOURCING</span>
+        <h1>Everything you need.<br><em>One marketplace.</em></h1>
+        <p>Discover electronic components, industrial products and trusted suppliers — all in one place.</p>
+        <button (click)="loadProducts()">Explore products <span>→</span></button>
+      </div>
+      <div class="hero-art">
+        <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+        <div class="hero-chip">V</div>
+        <div class="floating-tag tag-one">✦ AI powered search</div>
+        <div class="floating-tag tag-two">✓ Supplier network</div>
+      </div>
+    </section>
+
+    <section class="benefits">
+      <div><span class="benefit-icon">⌕</span><span><b>Find faster</b><small>Search by name, brand or MPN</small></span></div>
+      <div><span class="benefit-icon">◇</span><span><b>Compare suppliers</b><small>Pricing and availability</small></span></div>
+      <div><span class="benefit-icon">✦</span><span><b>AI assistance</b><small>Get sourcing recommendations</small></span></div>
+      <div><span class="benefit-icon">✓</span><span><b>Easy procurement</b><small>Cart to purchase order</small></span></div>
+    </section>
+
+    <section class="products-section" id="products">
+      <div class="section-heading">
+        <div><span class="eyebrow">EXPLORE THE CATALOG</span><h2>Popular products</h2><p>Find the right parts for your next project.</p></div>
+        <button class="view-all" (click)="selectedCategory.set('All'); query.set(''); loadProducts()">View all products <span>→</span></button>
+      </div>
+      <div class="loading-state" *ngIf="loadingProducts()">Loading products…</div>
+      <div class="error-state" *ngIf="productError()">{{productError()}} <button (click)="loadProducts()">Retry</button></div>
+      <div class="product-grid" *ngIf="!loadingProducts() && !productError()">
+        <article class="product-card" *ngFor="let item of filteredItems()">
+          <div class="product-image-wrap">
+            <img [src]="image(item)" [alt]="item.itemName" loading="lazy">
+            <span class="discount" *ngIf="item.discountPercent">{{item.discountPercent}}% off</span>
+          </div>
+          <div class="product-info">
+            <span class="product-brand">{{item.brand || item.categoryName || 'V-Mazz catalog'}}</span>
+            <h3>{{item.itemName}}</h3>
+            <p class="mpn">MPN: {{item.itemCode}}</p>
+            <div class="price-line"><strong>{{money(item)}}</strong><del *ngIf="item.mrp">{{item.currency || 'INR'}} {{item.mrp}}</del></div>
+            <div class="stock-line"><span [class.out-stock]="!item.inStock">{{item.inStock ? '● In stock' : '● Check availability'}}</span><small>MOQ: {{item.minOrderQuantity || 1}}</small></div>
+            <button class="add-button" (click)="addToCart(item)">Add to cart <span>＋</span></button>
+          </div>
+        </article>
+        <div class="empty-state" *ngIf="filteredItems().length === 0">No products found. Try another search.</div>
+      </div>
+    </section>
+
+    <section class="ai-banner">
+      <div class="ai-spark">✦</div>
+      <div><span class="eyebrow">MEET YOUR SOURCING ASSISTANT</span><h2>Not sure what you need?</h2><p>Ask V-Mazz AI to find components, compare alternatives or help with MPN availability.</p></div>
+      <button (click)="openChat()">Chat with V-Mazz AI <span>→</span></button>
+    </section>
+  </main>
+
+  <ng-template #ordersView>
+    <section class="simple-page">
+      <button class="back-link" (click)="activeTab.set('home')">← Back to marketplace</button>
+      <h1>My orders</h1>
+      <p>Sign in to view your purchase orders and order status.</p>
+      <button class="primary-button" (click)="loginOpen.set(true)">Sign in</button>
+    </section>
+  </ng-template>
+
+  <footer><span>© 2026 V-Mazz</span><span>Smarter sourcing. Simpler procurement.</span><button (click)="openChat()">Need help? Ask V-Mazz AI</button></footer>
+</div>
+
+<button class="ai-fab" (click)="chatOpen.set(!chatOpen())" aria-label="Open V-Mazz AI">
+  <span>✦</span><small>Ask AI</small>
+</button>
+
+<div class="chat-overlay" *ngIf="chatOpen()">
+  <section class="chat-panel">
+    <header class="chat-header">
+      <div class="chat-brand"><img src="assets/v-mazz-logo.png" alt=""><span><b>V-Mazz AI</b><small>Your procurement assistant</small></span></div>
+      <div class="chat-tools"><button title="New chat" (click)="newChat()">＋</button><button title="Close" (click)="chatOpen.set(false)">×</button></div>
+    </header>
+    <div class="chat-body">
+      <div class="chat-welcome" *ngIf="chatMessages().length === 0">
+        <div class="chat-logo"><img src="assets/v-mazz-logo.png" alt="V-Mazz"></div>
+        <h2>Hi! How can I help?</h2>
+        <p>Ask me to find products, check MPNs or suggest alternatives.</p>
+        <div class="suggestions">
+          <button (click)="chatInput.set('Find electronic components for industrial automation')">Find industrial components <span>↗</span></button>
+          <button (click)="chatInput.set('Help me find an alternative for an MPN')">Find an alternative MPN <span>↗</span></button>
+          <button (click)="chatInput.set('How can I compare supplier pricing?')">Compare supplier pricing <span>↗</span></button>
+        </div>
+      </div>
+      <div class="chat-message" *ngFor="let msg of chatMessages()" [class.user-message]="msg.role === 'user'">
+        <img *ngIf="msg.role === 'assistant'" src="assets/v-mazz-logo.png" alt="">
+        <div class="message-bubble">{{msg.text}}</div>
+      </div>
+      <div class="typing" *ngIf="chatLoading()"><span></span><span></span><span></span></div>
+      <div #chatEnd></div>
+    </div>
+    <div class="chat-composer">
+      <textarea rows="1" [ngModel]="chatInput()" (ngModelChange)="chatInput.set($event)" (keydown)="onChatKey($event)" placeholder="Ask V-Mazz anything…"></textarea>
+      <button (click)="sendChat()" [disabled]="!chatInput().trim() || chatLoading()" aria-label="Send message">↑</button>
+      <small>V-Mazz AI can make mistakes. Verify important information.</small>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="loginOpen()" (click)="loginOpen.set(false)">
+  <section class="login-modal" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="loginOpen.set(false)">×</button>
+    <img src="assets/v-mazz-logo.png" alt="V-Mazz">
+    <h2>Welcome back</h2><p>Sign in to continue shopping.</p>
+    <form (submit)="$event.preventDefault(); signIn()">
+      <label>Email address</label><input type="email" name="email" [(ngModel)]="email" required placeholder="you@company.com">
+      <label>Password</label><input type="password" name="password" [(ngModel)]="password" required placeholder="Enter password">
+      <p class="form-error" *ngIf="loginMessage()">{{loginMessage()}}</p>
+      <button class="primary-button" type="submit">Sign in</button>
+    </form>
+    <small>Supplier and customer registration can be added using the existing registration APIs.</small>
+  </section>
+</div>
+<div class="toast" *ngIf="toast()">{{toast()}}</div>

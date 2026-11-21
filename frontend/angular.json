@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "v-mazz": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/v-mazz",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "polyfills": ["zone.js"],
+            "tsConfig": "tsconfig.app.json",
+            "assets": [{"glob": "**/*", "input": "src/assets"}],
+            "styles": ["src/styles.css"]
+          },
+          "configurations": {
+            "production": {"budgets": [{"type": "initial", "maximumWarning": "1mb", "maximumError": "2mb"}], "outputHashing": "all"},
+            "development": {"optimization": false, "extractLicenses": false, "sourceMap": true}
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {"production": {"buildTarget": "v-mazz:build:production"}, "development": {"buildTarget": "v-mazz:build:development"}},
+          "defaultConfiguration": "development"
+        }
+      }
+    }
+  },
+  "cli": {
+    "analytics": "93280cb3-16e5-499e-b644-64a890c87026"
+  }
+}
